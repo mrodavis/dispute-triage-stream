@@ -1,0 +1,71 @@
+syntax = "proto3";
+
+package triage.v1;
+
+option go_package = "github.com/mrodavis/dispute-triage-stream/gen/triage/v1;triagev1";
+
+// ReviewService is how dispute analysts read AI triage decisions and resolve the ones routed to people.
+service ReviewService {
+  rpc GetDecision(GetDecisionRequest) returns (Decision);
+  rpc ListReviewQueue(ListReviewQueueRequest) returns (ListReviewQueueResponse);
+  rpc ResolveReview(ResolveReviewRequest) returns (Decision);
+}
+
+enum Route {
+  ROUTE_UNSPECIFIED = 0;
+  ROUTE_AUTO_CREDIT = 1;
+  ROUTE_CHARGEBACK = 2;
+  ROUTE_REVIEW = 3;
+  ROUTE_FRAUD = 4;
+}
+
+enum Outcome {
+  OUTCOME_UNSPECIFIED = 0;
+  OUTCOME_APPROVE_CHARGEBACK = 1;
+  OUTCOME_CREDIT = 2;
+  OUTCOME_DENY = 3;
+}
+
+message Decision {
+  string dispute_id = 1;
+  string account_id = 2;
+  Route route = 3;
+  repeated string reasons = 4;
+  string reason_code = 5;
+  string category = 6;
+  double confidence = 7;
+  string summary = 8;
+  int64 amount_cents = 9;
+  string temporary_credit_due = 10;
+  string merchant_response_due = 11;
+  string model = 12;
+  string prompt_hash = 13;
+  string decided_at = 14;
+  Resolution resolution = 15;
+}
+
+message Resolution {
+  Outcome outcome = 1;
+  string reviewer = 2;
+  string note = 3;
+  string resolved_at = 4;
+}
+
+message GetDecisionRequest {
+  string dispute_id = 1;
+}
+
+message ListReviewQueueRequest {
+  Route route = 1; // ROUTE_UNSPECIFIED lists review and fraud
+  int32 page_size = 2;
+}
+
+message ListReviewQueueResponse {
+  repeated Decision decisions = 1;
+}
+
+message ResolveReviewRequest {
+  string dispute_id = 1;
+  Outcome outcome = 2;
+  string note = 3;
+}
